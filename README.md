@@ -62,7 +62,7 @@ func main() {
 		ce.CheckError(io.EOF, slog.String("k1", "v1"))
 	}()
 
-	// case 2
+	// case 3
 	func() {
 		defer ce.Recover(false)
 		panic(io.EOF)
