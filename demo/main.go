@@ -1,9 +1,3 @@
-# ce
-Simple wrapper for standard library log/slog
-
-### usage
-
-```
 package main
 
 import (
@@ -68,6 +62,3 @@ func main() {
 		panic(io.EOF)
 	}()
 }
-
-
-```
