@@ -116,7 +116,10 @@ func (p *panicByCheckError) Error() string {
 
 func CheckError(err error, attrs ...slog.Attr) {
 	if err != nil {
-		Default().logAttrs(nil, slog.LevelError, -1, "checkError", attrs...)
+		ats := make([]slog.Attr, 0, len(attrs)+1)
+		ats = append(ats, slog.Any("err", err))
+		ats = append(ats, attrs...)
+		Default().logAttrs(nil, slog.LevelError, -1, "checkError", ats...)
 		panic(&panicByCheckError{OriginalErr: err})
 	}
 }
