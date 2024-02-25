@@ -12,7 +12,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"runtime/debug"
-	"strconv"
 	"sync/atomic"
 	"syscall"
 	"time"
@@ -35,7 +34,7 @@ func init() {
 	DefaultLevel.Set(slog.LevelDebug)
 
 	log := slog.New(
-		slog.NewJSONHandler(
+		slog.NewTextHandler(
 			os.Stderr,
 			&slog.HandlerOptions{
 				AddSource: true,
@@ -54,7 +53,7 @@ func init() {
 	defaultLogger.Store(&slogWrapper{log})
 }
 
-func (l *slogWrapper) logAttrs(ctx context.Context, level slog.Level, skip int, msg string, attrs ...slog.Attr) {
+func (l *slogWrapper) log(ctx context.Context, level slog.Level, skip int, msg string, args ...any) {
 	if !l.Enabled(ctx, level) {
 		return
 	}
@@ -71,39 +70,35 @@ func (l *slogWrapper) logAttrs(ctx context.Context, level slog.Level, skip int, 
 		pc = pcs[0]
 	}
 	r := slog.NewRecord(time.Now(), level, msg, pc)
-	r.AddAttrs(attrs...)
+	r.Add(args...)
 	if ctx == nil {
 		ctx = context.Background()
 	}
 	_ = l.Handler().Handle(ctx, r)
 }
 
-func Print(objs ...any) {
-	var attrs []slog.Attr
-	for i, v := range objs {
-		attrs = append(attrs, slog.Any(strconv.Itoa(i), v))
-	}
-	Default().logAttrs(nil, slog.LevelDebug, -1, "Print", attrs...)
+func Print(args ...any) {
+	Default().log(nil, slog.LevelDebug, -1, "Print", args...)
 }
 
-func Printf(format string, a ...any) {
-	Default().logAttrs(nil, slog.LevelDebug, -1, "Printf", slog.String("0", fmt.Sprintf(format, a...)))
+func Printf(format string, args ...any) {
+	Default().log(nil, slog.LevelDebug, -1, "Printf", slog.String("unknown", fmt.Sprintf(format, args...)))
 }
 
-func Debug(msg string, attrs ...slog.Attr) {
-	Default().logAttrs(nil, slog.LevelDebug, -1, msg, attrs...)
+func Debug(msg string, args ...any) {
+	Default().log(nil, slog.LevelDebug, -1, msg, args...)
 }
 
-func Info(msg string, attrs ...slog.Attr) {
-	Default().logAttrs(nil, slog.LevelInfo, -1, msg, attrs...)
+func Info(msg string, args ...any) {
+	Default().log(nil, slog.LevelInfo, -1, msg, args...)
 }
 
-func Warn(msg string, attrs ...slog.Attr) {
-	Default().logAttrs(nil, slog.LevelWarn, -1, msg, attrs...)
+func Warn(msg string, args ...any) {
+	Default().log(nil, slog.LevelWarn, -1, msg, args...)
 }
 
-func Error(msg string, attrs ...slog.Attr) {
-	Default().logAttrs(nil, slog.LevelError, -1, msg, attrs...)
+func Error(msg string, args ...any) {
+	Default().log(nil, slog.LevelError, -1, msg, args...)
 }
 
 type panicByCheckError struct {
@@ -114,12 +109,12 @@ func (p *panicByCheckError) Error() string {
 	return p.OriginalErr.Error()
 }
 
-func CheckError(err error, attrs ...slog.Attr) {
+func CheckError(err error, args ...any) {
 	if err != nil {
-		ats := make([]slog.Attr, 0, len(attrs)+1)
-		ats = append(ats, slog.Any("err", err))
-		ats = append(ats, attrs...)
-		Default().logAttrs(nil, slog.LevelError, -1, "checkError", ats...)
+		l := make([]any, 0, len(args)+2)
+		l = append(l, "err", err)
+		l = append(l, args...)
+		Default().log(nil, slog.LevelError, -1, "checkError", l...)
 		panic(&panicByCheckError{OriginalErr: err})
 	}
 }
@@ -130,9 +125,9 @@ var Recover = func(showStack bool, defers ...func(recoverObj interface{})) {
 		if ok == false {
 			if showStack {
 				callStackBin := debug.Stack()
-				Default().logAttrs(nil, slog.LevelError, 4, "recover", slog.Any("recoverObj", recoverObj), slog.String("callStack", *(*string)(unsafe.Pointer(&callStackBin))))
+				Default().log(nil, slog.LevelError, 4, "recover", "recoverObj", recoverObj, "callStack", *(*string)(unsafe.Pointer(&callStackBin)))
 			} else {
-				Default().logAttrs(nil, slog.LevelError, 4, "recover", slog.Any("recoverObj", recoverObj))
+				Default().log(nil, slog.LevelError, 4, "recover", "recoverObj", recoverObj)
 			}
 		}
 

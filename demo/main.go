@@ -11,14 +11,14 @@ import (
 
 func main() {
 	log := slog.New(
-		slog.NewJSONHandler(
+		slog.NewTextHandler(
 			io.MultiWriter(
 				os.Stderr,
 				&lumberjack.Logger{
-					Filename:   "/tmp/foobar.txt",
-					MaxSize:    1,  // mb
-					MaxAge:     30, // days
-					MaxBackups: 7,  // count of log file
+					Filename:   "/tmp/1/foobar.txt",
+					MaxSize:    1, // mb
+					MaxAge:     7, // days
+					MaxBackups: 0, // count of log file, 0 means default(retain all old log files)
 					LocalTime:  false,
 					Compress:   false,
 				},
@@ -46,19 +46,33 @@ func main() {
 		ce.Info("test2")
 		ce.Warn("test3")
 		ce.Error("test4")
+		ce.Print("test5", "msg5", "foo", "bar")
+		ce.Printf("%s - %s", "test6", "msg6")
 		ce.DefaultLevel.Set(slog.LevelInfo)
-		ce.Debug("test5")
+		ce.Debug("test7")
 	}()
 
 	// case 2
 	func() {
 		defer ce.Recover(false)
-		ce.CheckError(io.EOF, slog.String("k1", "v1"))
+		ce.CheckError(io.EOF, "k1", "v1")
 	}()
 
-	// case 2
+	// case 3
+	func() {
+		defer ce.Recover(true)
+		ce.CheckError(io.EOF, "k1", "v1")
+	}()
+
+	// case 4
 	func() {
 		defer ce.Recover(false)
+		panic(io.EOF)
+	}()
+
+	// case 5
+	func() {
+		defer ce.Recover(true)
 		panic(io.EOF)
 	}()
 }
