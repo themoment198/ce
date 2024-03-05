@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"runtime/debug"
+	"strconv"
 	"sync/atomic"
 	"syscall"
 	"time"
@@ -78,11 +79,16 @@ func (l *slogWrapper) log(ctx context.Context, level slog.Level, skip int, msg s
 }
 
 func Print(args ...any) {
-	Default().log(nil, slog.LevelDebug, -1, "Print", args...)
+	var argsNew []any
+	for k, v := range args {
+		argsNew = append(argsNew, strconv.Itoa(k))
+		argsNew = append(argsNew, v)
+	}
+	Default().log(nil, slog.LevelDebug, -1, "Print", argsNew...)
 }
 
 func Printf(format string, args ...any) {
-	Default().log(nil, slog.LevelDebug, -1, "Printf", slog.String("unknown", fmt.Sprintf(format, args...)))
+	Default().log(nil, slog.LevelDebug, -1, "Printf", slog.String("0", fmt.Sprintf(format, args...)))
 }
 
 func Debug(msg string, args ...any) {
