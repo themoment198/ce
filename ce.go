@@ -35,7 +35,7 @@ func init() {
 	DefaultLevel.Set(slog.LevelDebug)
 
 	log := slog.New(
-		slog.NewTextHandler(
+		slog.NewJSONHandler(
 			os.Stderr,
 			&slog.HandlerOptions{
 				AddSource: true,

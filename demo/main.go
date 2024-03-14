@@ -11,7 +11,7 @@ import (
 
 func main() {
 	log := slog.New(
-		slog.NewTextHandler(
+		slog.NewJSONHandler(
 			io.MultiWriter(
 				os.Stderr,
 				&lumberjack.Logger{
